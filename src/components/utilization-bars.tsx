@@ -22,14 +22,15 @@ type Props = {
 };
 
 const LOW_DAY_THRESHOLD = 50;
-const YELLOW_BAR = "#ffd648";
+/** Red bar for weeks averaging under the low-usage threshold. */
+const LOW_BAR = "#ff6b6b";
 const WHITE_BAR = "rgba(255,255,255,1)";
 
 /**
  * Weekly utilisation chart shown inside the station popup. Renders 4
  * bars for the last 4 weeks (≈30 days) with the week's date range below.
- * - Bars default to white; weeks averaging < 50 EVs/day render in
- *   bright yellow to flag low utilisation.
+ * - Bars default to white; weeks averaging < 50 EVs/day render in red
+ *   to flag low utilisation.
  * - Hovering a bar shows a round pill tooltip with the total EVs that
  *   week.
  */
@@ -53,7 +54,7 @@ export function UtilizationBars({ weeks, height = 40 }: Props) {
         {weeks.map((d, i) => {
           const active = i === hoveredIndex;
           const isLowWeek = d.cars < LOW_DAY_THRESHOLD;
-          const barColor = isLowWeek ? YELLOW_BAR : WHITE_BAR;
+          const barColor = isLowWeek ? LOW_BAR : WHITE_BAR;
           return (
             <div
               key={i}

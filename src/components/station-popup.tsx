@@ -60,6 +60,11 @@ type Props = {
    */
   offsetX?: number;
   offsetY?: number;
+  /**
+   * Short all-caps label shown next to the rating pill — used only for
+   * create-mode popups. Typical values: "GOOD LOCATION", "POOR LOCATION".
+   */
+  locationLabel?: string;
 };
 
 const placementTransforms: Record<Placement, { initialX: number; initialY: number; exitX: number; exitY: number }> = {
@@ -83,6 +88,7 @@ export function StationPopup({
   offsetX = 0,
   offsetY = 0,
   regional,
+  locationLabel,
 }: Props) {
   const t = placementTransforms[placement];
 
@@ -105,19 +111,23 @@ export function StationPopup({
   const theme =
     resolvedVariant === "ocean"
       ? {
-          pillBg: "rgba(96, 165, 250, 0.22)",
-          pillText: "#60a5fa",
-          barFilled: "#60a5fa",
-          barEmpty: "rgba(96, 165, 250, 0.22)",
-          levelColor: "#60a5fa",
+          // Ocean popup uses the neutral white palette — same as the
+          // default variant so it doesn't read as a second accent.
+          pillBg: "white",
+          pillText: "#0c0c09",
+          barFilled: "rgba(255,255,255,1)",
+          barEmpty: "rgba(255,255,255,0.24)",
+          levelColor: "#ffffff",
         }
       : resolvedVariant === "low"
         ? {
-            pillBg: "rgba(255, 221, 87, 0.22)",
-            pillText: "#ffd648",
-            barFilled: "#ffd648",
-            barEmpty: "rgba(255,221,87,0.22)",
-            levelColor: "#ffd648",
+            // Low-rated stations: red palette for clear danger-signal
+            // contrast against the dark popup background.
+            pillBg: "rgba(255, 92, 92, 0.20)",
+            pillText: "#ff6b6b",
+            barFilled: "#ff6b6b",
+            barEmpty: "rgba(255,92,92,0.22)",
+            levelColor: "#ff6b6b",
           }
         : {
             pillBg: "white",
@@ -152,16 +162,31 @@ export function StationPopup({
       }}
     >
       <div className="flex items-start justify-between">
-        <div
-          className="rounded-full px-2 py-[2px]"
-          style={{ backgroundColor: theme.pillBg }}
-        >
-          <p
-            className="text-[14px] font-medium leading-5"
-            style={{ color: theme.pillText }}
+        <div className="flex h-5 items-center gap-2">
+          <div
+            className="rounded-full px-2 py-[2px]"
+            style={{ backgroundColor: theme.pillBg }}
           >
-            {rating}
-          </p>
+            <p
+              className="text-[14px] font-medium leading-5"
+              style={{ color: theme.pillText }}
+            >
+              {rating}
+            </p>
+          </div>
+          {locationLabel && (
+            <p
+              className="text-[12px] leading-5 font-bold tracking-wide"
+              style={{
+                // Good locations in white for a positive read; poor
+                // locations inherit the warning/red theme so the colour
+                // reinforces the message.
+                color: /poor/i.test(locationLabel) ? "#ff6b6b" : "#ffffff",
+              }}
+            >
+              {locationLabel}
+            </p>
+          )}
         </div>
         <button
           type="button"

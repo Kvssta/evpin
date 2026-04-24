@@ -8,7 +8,7 @@ type Props = {
   active?: boolean;
   /** If true, slightly darkens the pin (used when another pin is active). */
   dimmed?: boolean;
-  /** If true, renders the pin in yellow to signal a low-quality station. */
+  /** If true, renders the pin in red to signal a low-quality station. */
   warning?: boolean;
 };
 
@@ -21,33 +21,33 @@ export function ChargingPin({ onClick, active, dimmed, warning }: Props) {
   const base =
     "relative grid size-8 cursor-grab active:cursor-grabbing place-items-center rounded-full backdrop-blur-[6px] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/70 active:scale-95 transition-[background-color,transform,box-shadow,filter] duration-150";
 
-  // Bright yellow zap on every pin — that's the brand accent. The pin
-  // body differentiates state: warning = dark amber, regular = translucent
-  // black. Active yellow ring matches the icon.
-  const YELLOW_ICON = "#ffd648";
-  const YELLOW_RING = "rgba(255, 214, 72, 1)";
+  // White zap on regular pins, red zap on warning (low-rated) pins. The
+  // active-state ring matches: white ring on regular, red ring on
+  // warning — strong contrast against their respective pin bodies.
+  const RED_ICON = "#ff6b6b";
+  const RED_RING = "rgba(255, 107, 107, 1)";
 
-  // Yellow pins use an amber-tinted shadow stack rather than black so the
-  // depth cue reads as part of the same warm colour world.
+  // Warning pins use a red-tinted shadow stack so the depth cue stays
+  // in the same colour world as the body.
   const warningShadowBase =
-    "0 1px 2px rgba(120, 78, 0, 0.35), 0 4px 8px rgba(120, 78, 0, 0.30), 0 10px 20px rgba(140, 92, 0, 0.28), 0 18px 32px rgba(140, 92, 0, 0.18)";
+    "0 1px 2px rgba(100, 20, 20, 0.35), 0 4px 8px rgba(100, 20, 20, 0.30), 0 10px 20px rgba(120, 25, 25, 0.28), 0 18px 32px rgba(120, 25, 25, 0.18)";
   const regularShadowBase =
     "0 1px 2px rgba(0,0,0,0.18), 0 4px 8px rgba(0,0,0,0.18), 0 10px 20px rgba(0,0,0,0.22), 0 18px 32px rgba(0,0,0,0.14)";
 
   const shadow = active
     ? warning
-      ? `inset 0 0 0 1px ${YELLOW_RING}, ${warningShadowBase}`
+      ? `inset 0 0 0 1px ${RED_RING}, ${warningShadowBase}`
       : `inset 0 0 0 1px rgba(255,255,255,1), ${regularShadowBase}`
     : warning
       ? warningShadowBase
       : regularShadowBase;
 
   // Active state ONLY changes the inset ring — pin's base colour never
-  // shifts on click. Yellow pins stay yellow; regular (dark-glass) pins
+  // shifts on click. Warning (low-rated) pins stay red; regular pins
   // keep their black/30 translucent body. Icon colour is set via `style`
-  // so both states get the same yellow zap.
+  // so warning pins get the red zap; regular pins the white zap.
   const color = warning
-    ? "bg-[rgba(140,92,0,0.85)] hover:bg-[rgba(140,92,0,0.95)]"
+    ? "bg-[rgba(140,20,20,0.85)] hover:bg-[rgba(140,20,20,0.95)]"
     : "bg-black/30 hover:bg-black/55";
 
   return (
@@ -62,9 +62,8 @@ export function ChargingPin({ onClick, active, dimmed, warning }: Props) {
       data-active={active ? "true" : "false"}
       style={{
         filter: dimmed ? "brightness(0.8) saturate(0.9)" : undefined,
-        // Icon color contrasts the pin body: warning pins get the yellow
-        // zap, regular (black-body) pins get a clean white zap.
-        color: warning ? YELLOW_ICON : "#ffffff",
+        // Warning (low-rated) pins get a red zap; regular pins white.
+        color: warning ? RED_ICON : "#ffffff",
         boxShadow: shadow,
       }}
       className={`${base} ${color}`}

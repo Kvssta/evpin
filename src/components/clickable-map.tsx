@@ -457,51 +457,45 @@ export function ClickableMap() {
             style={{ left: click.x, top: click.y }}
             onClick={(e) => e.stopPropagation()}
           >
-            {/* Placeholder pin — only for land clicks. Same 32×32 size as
-                real station pins, and z-10 so it sits above the popup's
-                drop shadow. We animate only opacity + scale on the wrapper
-                (animating `filter` on the parent short-circuits
-                `backdrop-filter` on the child), and keep a real backdrop
-                blur on the inner disc so the map behind it blurs. */}
-            {click.type === "land" && (
-              <motion.div
-                initial={{ opacity: 0, scale: 0.7 }}
-                animate={{ opacity: 1, scale: 1 }}
-                exit={{ opacity: 0, scale: 0.9 }}
-                transition={{ duration: 0.3, ease: [0.22, 1, 0.36, 1] }}
-                className="pointer-events-none absolute left-0 top-0 z-10 -translate-x-1/2 -translate-y-1/2"
+            {/* Placeholder pin — shown for every click (land and
+                ocean). z-10 so it sits above the popup's drop shadow. */}
+            <motion.div
+              initial={{ opacity: 0, scale: 0.7 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.9 }}
+              transition={{ duration: 0.3, ease: [0.22, 1, 0.36, 1] }}
+              className="pointer-events-none absolute left-0 top-0 z-10 -translate-x-1/2 -translate-y-1/2"
+            >
+              <div
+                className="grid place-items-center rounded-full"
+                style={{
+                  width: PIN_SIZE,
+                  height: PIN_SIZE,
+                  backgroundColor: "rgba(0,0,0,0.55)",
+                  backdropFilter: "blur(10px) saturate(1.1)",
+                  WebkitBackdropFilter: "blur(10px) saturate(1.1)",
+                  boxShadow:
+                    "0 1px 1px rgba(0,0,0,0.10), 0 2px 2px rgba(0,0,0,0.09), 0 5px 3px rgba(0,0,0,0.05), 0 9px 4px rgba(0,0,0,0.01)",
+                }}
               >
-                <div
-                  className="grid place-items-center rounded-full"
-                  style={{
-                    width: PIN_SIZE,
-                    height: PIN_SIZE,
-                    backgroundColor: "rgba(0,0,0,0.55)",
-                    backdropFilter: "blur(10px) saturate(1.1)",
-                    WebkitBackdropFilter: "blur(10px) saturate(1.1)",
-                    boxShadow:
-                      "0 1px 1px rgba(0,0,0,0.10), 0 2px 2px rgba(0,0,0,0.09), 0 5px 3px rgba(0,0,0,0.05), 0 9px 4px rgba(0,0,0,0.01)",
-                  }}
+                <svg
+                  width="20"
+                  height="20"
+                  viewBox="0 0 20 20"
+                  fill="none"
+                  aria-hidden
                 >
-                  <svg
-                    width="20"
-                    height="20"
-                    viewBox="0 0 20 20"
-                    fill="none"
-                    aria-hidden
-                  >
-                    <path
-                      d="M19 10C19 14.9706 14.9706 19 10 19C5.02944 19 1 14.9706 1 10C1 5.02944 5.02944 1 10 1C14.9706 1 19 5.02944 19 10Z"
-                      stroke="white"
-                      strokeWidth="2"
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeDasharray="3 4"
-                    />
-                  </svg>
-                </div>
-              </motion.div>
-            )}
+                  <path
+                    d="M19 10C19 14.9706 14.9706 19 10 19C5.02944 19 1 14.9706 1 10C1 5.02944 5.02944 1 10 1C14.9706 1 19 5.02944 19 10Z"
+                    stroke="white"
+                    strokeWidth="2"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeDasharray="3 4"
+                  />
+                </svg>
+              </div>
+            </motion.div>
 
             {/* Wrapper gives the popup an anchor point at the clicked
                 coord. The inner popup positions itself relative to that
@@ -525,6 +519,15 @@ export function ClickableMap() {
                 offsetY={click.offsetY}
                 variant={click.type === "ocean" ? "ocean" : undefined}
                 hideCta={click.type === "ocean"}
+                // Good/poor verdict shown only on create-mode land
+                // clicks — derived from the generated rating.
+                locationLabel={
+                  click.type === "land"
+                    ? parseFloat(click.data.rating) >= 4
+                      ? "GOOD LOCATION"
+                      : "POOR LOCATION"
+                    : undefined
+                }
                 onClose={() => setClick(null)}
               />
             </div>
