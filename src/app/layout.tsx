@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono, Inter } from "next/font/google";
 import { Agentation } from "agentation";
+import { SoundRoot } from "@/components/sound-root";
 import "./globals.css";
 
 const geistSans = Geist({
@@ -34,7 +35,7 @@ export default function RootLayout({
       className={`${geistSans.variable} ${geistMono.variable} ${inter.variable} h-full antialiased`}
     >
       <body className="min-h-full flex flex-col font-sans">
-        {children}
+        <SoundRoot>{children}</SoundRoot>
         {process.env.NODE_ENV === "development" && <Agentation />}
       </body>
     </html>

@@ -5,7 +5,7 @@ import { motion } from "motion/react";
 const items = [
   "Access to 20,000+ EV stations worldwide",
   "Up-to-date data on EV usage and adoption across the world",
-  "Used by members of Porsche, Tesla & more",
+  "Recommended by members of Porsche, Tesla & more",
 ];
 
 export function HeroChecklist() {

@@ -2,6 +2,8 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import { AnimatePresence, motion } from "motion/react";
+import { useSound } from "@web-kits/audio/react";
+import { notification, errorSound } from "@/lib/ui-sounds";
 import { StationPopup, type Placement } from "./station-popup";
 import { useMode } from "./mode-context";
 
@@ -56,9 +58,50 @@ type Click = {
       number?: number;
       format?: (n: number) => string;
     }>;
+    regional?: {
+      level: "LOW" | "MED" | "HIGH";
+      filled: number;
+      percent: number;
+    };
   };
   placement: Placement;
+  offsetX: number;
+  offsetY: number;
 };
+
+const EDGE_GUARD = 24;
+
+/** Clamp the popup so it's at least EDGE_GUARD px from the viewport AND
+ *  the hero section edges. Hero has overflow:hidden so we must keep the
+ *  popup inside it, not just inside the viewport. */
+function clampedOffsetViewport(
+  clientX: number,
+  clientY: number,
+  placement: Placement,
+  heroRect: DOMRect | null,
+) {
+  const vw = window.innerWidth;
+  const vh = window.innerHeight;
+  const minX = Math.max(EDGE_GUARD, (heroRect?.left ?? 0) + EDGE_GUARD);
+  const maxX = Math.min(
+    vw - POPUP_W - EDGE_GUARD,
+    (heroRect?.right ?? vw) - POPUP_W - EDGE_GUARD,
+  );
+  const minY = Math.max(EDGE_GUARD, (heroRect?.top ?? 0) + EDGE_GUARD);
+  const maxY = Math.min(
+    vh - POPUP_H - EDGE_GUARD,
+    (heroRect?.bottom ?? vh) - POPUP_H - EDGE_GUARD,
+  );
+
+  if (placement === "top" || placement === "bottom") {
+    const desiredLeft = clientX - POPUP_W / 2;
+    const clamped = Math.max(minX, Math.min(maxX, desiredLeft));
+    return { offsetX: clamped - desiredLeft, offsetY: 0 };
+  }
+  const desiredTop = clientY - POPUP_H / 2;
+  const clamped = Math.max(minY, Math.min(maxY, desiredTop));
+  return { offsetX: 0, offsetY: clamped - desiredTop };
+}
 
 const commas = (n: number) => n.toLocaleString();
 
@@ -104,6 +147,18 @@ function generateLandData(): Click["data"] {
         detailSuffix: " DCFC ports within 5mi",
       },
     ],
+    // Regional utilisation — share of nearby chargers currently in use.
+    regional: (() => {
+      const percent = randInt(20, 90);
+      const filled = percent >= 65 ? 3 : percent >= 35 ? 2 : 1;
+      const level = (filled === 3 ? "HIGH" : filled === 2 ? "MED" : "LOW") as
+        | "LOW"
+        | "MED"
+        | "HIGH";
+      return { level, filled, percent };
+    })(),
+    // Utilisation chart is reserved for existing stations only; create-mode
+    // placements don't have historical usage data yet.
   };
 }
 
@@ -153,11 +208,26 @@ function pickPlacement(x: number, y: number, w: number, h: number): Placement {
   const spaceBottom = h - y;
   const spaceLeft = x;
   const spaceRight = w - x;
-  if (spaceBottom >= POPUP_H + GAP) return "bottom";
-  if (spaceTop >= POPUP_H + GAP) return "top";
-  if (spaceLeft >= POPUP_W + GAP) return "left";
-  if (spaceRight >= POPUP_W + GAP) return "right";
-  return spaceBottom > spaceTop ? "bottom" : "top";
+
+  // Only pick top/bottom if the popup's width also fits horizontally
+  // centred on the click point; same for left/right needing vertical fit.
+  const fitsHorizontally = x - POPUP_W / 2 >= 8 && w - (x + POPUP_W / 2) >= 8;
+  const fitsVertically = y - POPUP_H / 2 >= 8 && h - (y + POPUP_H / 2) >= 8;
+
+  if (spaceBottom >= POPUP_H + GAP && fitsHorizontally) return "bottom";
+  if (spaceTop >= POPUP_H + GAP && fitsHorizontally) return "top";
+  if (spaceRight >= POPUP_W + GAP && fitsVertically) return "right";
+  if (spaceLeft >= POPUP_W + GAP && fitsVertically) return "left";
+
+  // Degenerate: pick whichever side has the most raw space.
+  const options: Array<[Placement, number]> = [
+    ["top", spaceTop],
+    ["bottom", spaceBottom],
+    ["right", spaceRight],
+    ["left", spaceLeft],
+  ];
+  options.sort((a, b) => b[1] - a[1]);
+  return options[0][0];
 }
 
 const placementStyle = (p: Placement) => {
@@ -182,6 +252,8 @@ export function ClickableMap() {
     h: number;
   } | null>(null);
   const [click, setClick] = useState<Click | null>(null);
+  const playNotification = useSound(notification);
+  const playError = useSound(errorSound);
 
   // Drop any open popup and clear the crosshair zone when the user
   // leaves create mode.
@@ -294,7 +366,23 @@ export function ClickableMap() {
     }
 
     const data = isOcean ? generateOceanData() : generateLandData();
+    // Land → success notification chime. Ocean → error sound to signal
+    // "you can't place a station in the water".
+    if (isOcean) {
+      playError();
+    } else {
+      playNotification();
+    }
     const placement = pickPlacement(cx, cy, rect.width, rect.height);
+    // `rect` is the layer's rect inside the hero, which conveniently is
+    // also the hero section's content rect (the ClickableMap is
+    // `inset-0` inside the section). Use it as the hero rect clamp.
+    const off = clampedOffsetViewport(
+      e.clientX,
+      e.clientY,
+      placement,
+      rect,
+    );
 
     setClick({
       x: cx,
@@ -302,8 +390,10 @@ export function ClickableMap() {
       type: isOcean ? "ocean" : "land",
       data,
       placement,
+      offsetX: off.offsetX,
+      offsetY: off.offsetY,
     });
-  }, [mode]);
+  }, [mode, playNotification, playError]);
 
   return (
     <div
@@ -401,7 +491,10 @@ export function ClickableMap() {
                 address={click.data.address}
                 city={click.data.city}
                 metrics={click.data.metrics}
+                regional={click.data.regional}
                 placement={click.placement}
+                offsetX={click.offsetX}
+                offsetY={click.offsetY}
                 variant={click.type === "ocean" ? "ocean" : undefined}
                 hideCta={click.type === "ocean"}
                 onClose={() => setClick(null)}

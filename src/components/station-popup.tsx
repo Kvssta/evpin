@@ -1,7 +1,10 @@
 "use client";
 
+import { useEffect } from "react";
 import { motion } from "motion/react";
-import { CountUp } from "./count-up";
+import { useSound } from "@web-kits/audio/react";
+import { popupOpen, popupClose, uiClick } from "@/lib/ui-sounds";
+import { UtilizationBars, type UtilizationDay } from "./utilization-bars";
 
 type Metric = {
   label: string;
@@ -23,6 +26,19 @@ type Props = {
   address: string;
   city: string;
   metrics: Metric[];
+  /** Optional 4-week utilisation chart (≈ last 30 days). */
+  utilization?: UtilizationDay[];
+  /**
+   * Optional regional utilisation score. Rendered *below* the chart as
+   * an extra LOW/MED/HIGH row showing the share of nearby chargers
+   * currently in use within a 5 mi radius.
+   */
+  regional?: {
+    level: "LOW" | "MED" | "HIGH";
+    filled: number;
+    /** % of chargers utilised in the 5 mi radius. */
+    percent: number;
+  };
   onClose: () => void;
   className?: string;
   placement?: Placement;
@@ -37,6 +53,13 @@ type Props = {
   variant?: "default" | "low" | "ocean";
   /** Hide the CTA button. Used for ocean popups. */
   hideCta?: boolean;
+  /**
+   * Extra px shift applied on top of the positioning classes. Used by
+   * callers to nudge the popup so it stays at least 24 px from viewport
+   * edges even if it looks displaced compared to the source pin.
+   */
+  offsetX?: number;
+  offsetY?: number;
 };
 
 const placementTransforms: Record<Placement, { initialX: number; initialY: number; exitX: number; exitY: number }> = {
@@ -51,13 +74,26 @@ export function StationPopup({
   address,
   city,
   metrics,
+  utilization,
   onClose,
   className = "",
   placement = "top",
   variant,
   hideCta,
+  offsetX = 0,
+  offsetY = 0,
+  regional,
 }: Props) {
   const t = placementTransforms[placement];
+
+  // Sound effects — open on mount, close when the user hits the X.
+  const playOpen = useSound(popupOpen);
+  const playClose = useSound(popupClose);
+  const playClick = useSound(uiClick);
+  useEffect(() => {
+    playOpen();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   // Pick the accent scheme. Explicit `variant` wins; otherwise fall back to
   // "low" for sub-3 ratings, "default" otherwise.
@@ -102,13 +138,17 @@ export function StationPopup({
       exit={{ opacity: 0, scale: 0.94, x: t.exitX, y: t.exitY, filter: "blur(14px)" }}
       transition={{ duration: 0.28, ease: [0.22, 1, 0.36, 1] }}
       onClick={(e) => e.stopPropagation()}
-      className={`w-[326px] rounded-[20px] p-4 flex flex-col gap-4 text-white ${className}`}
+      className={`w-[326px] rounded-[20px] pt-4 px-4 pb-5 flex flex-col gap-4 text-white ${className}`}
       style={{
         backgroundColor: "rgba(43, 43, 34, 0.68)",
         backdropFilter: "blur(6px)",
         WebkitBackdropFilter: "blur(6px)",
         boxShadow:
           "0 2px 6px 0 rgba(0,0,0,0.16), 0 14px 28px 0 rgba(0,0,0,0.22), 0 42px 56px 0 rgba(0,0,0,0.20), 0 90px 80px 0 rgba(0,0,0,0.10)",
+        // Non-animated nudge so the popup stays inside the viewport edge
+        // guardrails set by the caller.
+        marginLeft: offsetX || undefined,
+        marginTop: offsetY || undefined,
       }}
     >
       <div className="flex items-start justify-between">
@@ -125,7 +165,10 @@ export function StationPopup({
         </div>
         <button
           type="button"
-          onClick={onClose}
+          onClick={() => {
+            playClose();
+            onClose();
+          }}
           aria-label="Close"
           className="grid size-6 cursor-pointer place-items-center rounded-full bg-white/30 outline-none transition-colors duration-150 focus:outline-none hover:bg-white/45 active:bg-white/55"
           style={{
@@ -153,19 +196,26 @@ export function StationPopup({
         </button>
       </div>
 
-      <div className="flex flex-col text-[14px] leading-5">
-        <p className="text-white">{address}</p>
-        <p className="text-white/50">{city}</p>
+      <div className="flex flex-col leading-5">
+        {/* Station name reads a notch larger (16px / leading-6) than the
+            metric rows. */}
+        <p className="text-[16px] leading-6 font-medium text-white">
+          {address}
+        </p>
+        <p className="text-[14px] leading-5 text-white/50">{city}</p>
       </div>
 
       {metrics.map((m, mi) => {
         const baseDelay = 120 + mi * 180;
         return (
           <div key={m.label} className="flex flex-col">
-            <div className="flex items-center justify-between">
+            {/* Fixed 20px row height lets the left label, the bar stack,
+                and the LOW/MED/HIGH level text sit on the same vertical
+                centerline regardless of individual leading. */}
+            <div className="flex h-5 items-center justify-between">
               <p className="text-[14px] leading-5 text-white">{m.label}</p>
-              <div className="flex items-center gap-2">
-                <div className="flex items-center gap-[2px]">
+              <div className="flex h-5 items-center gap-2">
+                <div className="flex h-5 items-center gap-[2px]">
                   {[0, 1, 2].map((i) => (
                     <motion.span
                       key={i}
@@ -185,7 +235,7 @@ export function StationPopup({
                   ))}
                 </div>
                 <p
-                  className="text-[12px] leading-4 font-bold tracking-wide"
+                  className="text-[12px] leading-5 font-bold tracking-wide"
                   style={{ color: LEVEL_COLOR }}
                 >
                   {m.level}
@@ -194,24 +244,57 @@ export function StationPopup({
             </div>
             <p className="text-[14px] leading-5 text-white/50">
               {m.detailPrefix}
-              {m.number !== undefined ? (
-                <CountUp
-                  to={m.number}
-                  delay={baseDelay + 320}
-                  duration={900}
-                  format={m.format}
-                />
-              ) : null}
+              {m.number !== undefined
+                ? (m.format ? m.format(m.number) : m.number.toLocaleString())
+                : null}
               {m.detailSuffix}
             </p>
           </div>
         );
       })}
 
+      {utilization && utilization.length > 0 && (
+        <UtilizationBars weeks={utilization} />
+      )}
+
+      {regional && (
+        <div className="flex flex-col">
+          <div className="flex h-5 items-center justify-between">
+            <p className="text-[14px] leading-5 text-white">
+              Regional utilization
+            </p>
+            <div className="flex h-5 items-center gap-2">
+              <div className="flex h-5 items-center gap-[2px]">
+                {[0, 1, 2].map((i) => (
+                  <span
+                    key={i}
+                    className="h-2 w-[11px] rounded-[2px]"
+                    style={{
+                      backgroundColor:
+                        i < regional.filled ? BAR_FILLED : BAR_EMPTY,
+                    }}
+                  />
+                ))}
+              </div>
+              <p
+                className="text-[12px] leading-5 font-bold tracking-wide"
+                style={{ color: LEVEL_COLOR }}
+              >
+                {regional.level}
+              </p>
+            </div>
+          </div>
+          <p className="text-[14px] leading-5 text-white/50">
+            {regional.percent}% chargers in use within 5mi
+          </p>
+        </div>
+      )}
+
       {!hideCta && (
         <button
           type="button"
-          className="h-8 w-full cursor-pointer rounded-full bg-white text-neutral-950 text-[14px] font-bold leading-5 border border-black/10 shadow-[0_2px_2px_rgba(19,19,19,0.04)] transition-colors duration-150 hover:bg-neutral-200 active:bg-neutral-300"
+          onClick={() => playClick()}
+          className="h-8 w-full cursor-pointer rounded-full bg-white text-neutral-950 text-[14px] font-medium leading-5 border border-black/10 shadow-[0_2px_2px_rgba(19,19,19,0.04)] transition-colors duration-150 hover:bg-neutral-200 active:bg-neutral-300"
         >
           Design your station
         </button>

@@ -1,5 +1,8 @@
 "use client";
 
+import { useSound } from "@web-kits/audio/react";
+import { pinClick } from "@/lib/ui-sounds";
+
 type Props = {
   onClick?: (e: React.MouseEvent<HTMLButtonElement>) => void;
   active?: boolean;
@@ -10,16 +13,19 @@ type Props = {
 };
 
 export function ChargingPin({ onClick, active, dimmed, warning }: Props) {
+  // Station-click sound: a quick, short pure-sine blip (920 Hz, ~60 ms
+  // decay). No-ops if sound is disabled globally via SoundProvider.
+  const playClick = useSound(pinClick);
   // Default cursor on pins is `grab`; flips to `grabbing` while pressed.
   // In create mode a global rule overrides this with `cursor: none`.
   const base =
     "relative grid size-8 cursor-grab active:cursor-grabbing place-items-center rounded-full backdrop-blur-[6px] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/70 active:scale-95 transition-[background-color,transform,box-shadow,filter] duration-150";
 
-  // Dark-yellow icon contrasts nicely against the yellow fill; the
-  // click-ring uses a soft light-yellow so it reads as a glow rather than
-  // a hard amber outline.
-  const YELLOW_ICON = "#a37300";
-  const YELLOW_RING = "rgba(255, 243, 160, 1)";
+  // Bright yellow zap on every pin — that's the brand accent. The pin
+  // body differentiates state: warning = dark amber, regular = translucent
+  // black. Active yellow ring matches the icon.
+  const YELLOW_ICON = "#ffd648";
+  const YELLOW_RING = "rgba(255, 214, 72, 1)";
 
   // Yellow pins use an amber-tinted shadow stack rather than black so the
   // depth cue reads as part of the same warm colour world.
@@ -36,22 +42,29 @@ export function ChargingPin({ onClick, active, dimmed, warning }: Props) {
       ? warningShadowBase
       : regularShadowBase;
 
+  // Active state ONLY changes the inset ring — pin's base colour never
+  // shifts on click. Yellow pins stay yellow; regular (dark-glass) pins
+  // keep their black/30 translucent body. Icon colour is set via `style`
+  // so both states get the same yellow zap.
   const color = warning
-    ? "bg-[rgba(255,221,87,0.34)] hover:bg-[rgba(255,221,87,0.52)]" +
-      (active ? " !bg-[rgba(255,221,87,0.6)]" : "")
-    : "bg-black/30 text-white hover:bg-black/55" +
-      (active ? " !bg-black/65" : "");
+    ? "bg-[rgba(140,92,0,0.85)] hover:bg-[rgba(140,92,0,0.95)]"
+    : "bg-black/30 hover:bg-black/55";
 
   return (
     <button
       type="button"
-      onClick={onClick}
+      onClick={(e) => {
+        playClick();
+        onClick?.(e);
+      }}
       aria-label="Charging station"
       aria-pressed={active}
       data-active={active ? "true" : "false"}
       style={{
         filter: dimmed ? "brightness(0.8) saturate(0.9)" : undefined,
-        color: warning ? YELLOW_ICON : undefined,
+        // Icon color contrasts the pin body: warning pins get the yellow
+        // zap, regular (black-body) pins get a clean white zap.
+        color: warning ? YELLOW_ICON : "#ffffff",
         boxShadow: shadow,
       }}
       className={`${base} ${color}`}

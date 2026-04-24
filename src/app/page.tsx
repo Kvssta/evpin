@@ -6,6 +6,8 @@ import { SiteNav } from "@/components/site-nav";
 import { CrosshairCursor } from "@/components/crosshair-cursor";
 import { ModeProvider } from "@/components/mode-context";
 import { ModeToggle } from "@/components/mode-toggle";
+import { CyclingWord } from "@/components/cycling-word";
+import { SoundButton } from "@/components/sound-button";
 
 export default function Home() {
   return (
@@ -36,13 +38,10 @@ export default function Home() {
           <ModeToggle />
         </div>
 
-        {/* Hero copy block — pushed down 248px (148 + 100) from the top of
-            the section. The checklist now lives inline 32px below the
-            CTA row. */}
-        <div
-          className="pointer-events-none relative z-20 flex w-full justify-center px-6 pb-12"
-          style={{ paddingTop: 248 }}
-        >
+        {/* Hero copy block — vertically centred within the section so the
+            headline, description, CTAs and checklist all sit around the
+            optical centre regardless of section height. */}
+        <div className="pointer-events-none absolute inset-0 z-20 flex items-center justify-center px-6">
           <div className="w-[1280px] max-w-full">
             <div className="flex w-[707px] max-w-full flex-col gap-8">
               <div className="flex flex-col gap-6 text-white">
@@ -58,25 +57,32 @@ export default function Home() {
                   <span className="px-1">Used by 1,200+ businesses worldwide</span>
                 </div>
                 <h1 className="text-[64px] font-semibold leading-[72px] tracking-[-1.28px]">
-                  The industry standard for finding prime EV charging sites
+                  <span className="block">The industry standard</span>
+                  <span className="block">
+                    for{" "}
+                    <CyclingWord
+                      words={["finding", "designing", "proposing"]}
+                    />
+                  </span>
+                  <span className="block">prime EV charging sites</span>
                 </h1>
                 <p className="w-[545px] max-w-full text-[16px] font-medium leading-6">
                   Find and deploy sites with confidence. Station utilization data, to-scale layouts, and cost estimates, packaged into a shareable report in minutes.
                 </p>
               </div>
               <div className="pointer-events-auto flex items-start gap-4">
-                <button
+                <SoundButton
                   type="button"
                   className="h-10 cursor-pointer rounded-full bg-white px-4 text-[14px] font-medium leading-5 text-neutral-950 transition-colors duration-150 hover:bg-neutral-200 active:bg-neutral-300"
                 >
                   Start for Free
-                </button>
-                <button
+                </SoundButton>
+                <SoundButton
                   type="button"
-                  className="h-10 cursor-pointer rounded-full bg-black/25 px-4 text-[14px] font-medium leading-5 text-white transition-colors duration-150 hover:bg-black/55 active:bg-black/70"
+                  className="h-10 cursor-pointer rounded-full bg-black/25 px-4 text-[14px] font-medium leading-5 text-white transition-colors duration-150 hover:bg-black/35 active:bg-black/45"
                 >
                   View Pricing
-                </button>
+                </SoundButton>
               </div>
               {/* Checklist now sits 32px below the CTA row (gap-8 already
                   provides 32px separation from the button flex above). */}

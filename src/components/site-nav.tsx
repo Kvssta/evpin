@@ -1,38 +1,98 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { useSound } from "@web-kits/audio/react";
+import { uiClick } from "@/lib/ui-sounds";
 
 /**
  * Site-wide sticky navigation.
  *
- * - Sits at the top of the hero visually transparent so the map/sky shows
- *   through.
- * - Once the user starts scrolling, fades in a 16% black scrim with a
- *   backdrop blur and a hairline white bottom border — the same treatment
- *   described in the Figma scroll spec.
+ * - Transparent at the top of the hero (dark map behind it → white text).
+ * - Once the user scrolls, fades in a light progressive blur + subtle
+ *   dark tint, with a 0.5 px white hairline at the bottom.
+ * - Once the user has scrolled *past the hero*, the text flips to black
+ *   for contrast against the white logos / off-white testimonial
+ *   sections.
  */
 export function SiteNav() {
   const [scrolled, setScrolled] = useState(false);
+  const [darkBg, setDarkBg] = useState(true);
+  const playClick = useSound(uiClick);
 
   useEffect(() => {
-    const onScroll = () => setScrolled(window.scrollY > 4);
+    const onScroll = () => {
+      const y = window.scrollY;
+      setScrolled(y > 4);
+
+      // The hero is the first <section>. Once the user scrolls past its
+      // bottom (minus the nav height) the nav sits over light sections.
+      const hero = document.querySelector("section");
+      const navHeight = 72;
+      if (hero) {
+        const heroBottom = hero.getBoundingClientRect().bottom + y;
+        setDarkBg(y + navHeight < heroBottom);
+      }
+    };
     onScroll();
     window.addEventListener("scroll", onScroll, { passive: true });
-    return () => window.removeEventListener("scroll", onScroll);
+    window.addEventListener("resize", onScroll);
+    return () => {
+      window.removeEventListener("scroll", onScroll);
+      window.removeEventListener("resize", onScroll);
+    };
   }, []);
+
+  // Use data attributes so downstream classes can react.
+  const textColour = darkBg ? "#ffffff" : "#0c0c09";
+  const textDim = darkBg ? "rgba(255,255,255,0.8)" : "rgba(12,12,9,0.8)";
 
   return (
     <header
-      className="fixed inset-x-0 top-0 z-50 w-full transition-[background-color,backdrop-filter,box-shadow] duration-200 ease-out"
-      style={{
-        backgroundColor: scrolled ? "rgba(0,0,0,0.32)" : "transparent",
-        backdropFilter: scrolled ? "blur(20px)" : "none",
-        WebkitBackdropFilter: scrolled ? "blur(20px)" : "none",
-        // 0.5px hairline below the nav once the user has scrolled.
-        boxShadow: scrolled ? "inset 0 -0.5px 0 rgba(255,255,255,0.12)" : "none",
-      }}
+      className="fixed inset-x-0 top-0 z-50 w-full"
+      data-dark-bg={darkBg ? "true" : "false"}
     >
-      <div className="mx-auto flex w-[1280px] max-w-full items-center justify-between py-6">
+      {/* Progressive blur + tint layers (only visible once scrolled). */}
+      <div
+        aria-hidden
+        className="pointer-events-none absolute inset-0 overflow-hidden transition-opacity duration-200"
+        style={{ opacity: scrolled ? 1 : 0 }}
+      >
+        {([
+          { blur: 2, midpoint: 100 },
+          { blur: 5, midpoint: 70 },
+          { blur: 9, midpoint: 40 },
+        ] as const).map(({ blur, midpoint }) => (
+          <div
+            key={blur}
+            className="absolute inset-0"
+            style={{
+              backdropFilter: `blur(${blur}px)`,
+              WebkitBackdropFilter: `blur(${blur}px)`,
+              maskImage: `linear-gradient(to bottom, black 0%, transparent ${midpoint}%)`,
+              WebkitMaskImage: `linear-gradient(to bottom, black 0%, transparent ${midpoint}%)`,
+            }}
+          />
+        ))}
+        <div
+          className="absolute inset-0"
+          style={{
+            backgroundColor: darkBg
+              ? "rgba(0,0,0,0.14)"
+              : "rgba(255,255,255,0.45)",
+            maskImage:
+              "linear-gradient(to bottom, black 0%, transparent 100%)",
+            WebkitMaskImage:
+              "linear-gradient(to bottom, black 0%, transparent 100%)",
+          }}
+        />
+        {/* Bottom hairline removed — the tint + blur fade handles
+            separation cleanly on its own. */}
+      </div>
+
+      <div
+        className="relative mx-auto flex w-[1280px] max-w-full items-center justify-between py-6 transition-colors duration-200"
+        style={{ color: textColour }}
+      >
         <div className="flex items-center gap-8">
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
@@ -42,20 +102,44 @@ export function SiteNav() {
             height={32}
             className="h-8 w-auto"
             draggable={false}
+            style={{
+              filter: darkBg ? undefined : "invert(1)",
+            }}
           />
-          <nav className="flex items-center gap-6 text-[14px] font-bold leading-5 text-white tracking-[-0.01em]">
-            <a href="#" className="transition-colors hover:text-white/80">Home</a>
-            <a href="#" className="transition-colors hover:text-white/80">Tracker</a>
-            <a href="#" className="transition-colors hover:text-white/80">Pricing</a>
-            <a href="#" className="transition-colors hover:text-white/80">Spexbook</a>
-            <a href="#" className="transition-colors hover:text-white/80">Changelog</a>
+          <nav
+            className="flex items-center gap-6 text-[14px] font-bold leading-5 tracking-[-0.01em]"
+            style={{ color: textColour }}
+          >
+            {["Home", "Tracker", "Pricing", "Spexbook", "Changelog"].map(
+              (label) => (
+                <a
+                  key={label}
+                  href="#"
+                  className="transition-colors duration-150"
+                  style={{ color: textColour }}
+                  onMouseEnter={(e) =>
+                    (e.currentTarget.style.color = textDim)
+                  }
+                  onMouseLeave={(e) =>
+                    (e.currentTarget.style.color = textColour)
+                  }
+                >
+                  {label}
+                </a>
+              ),
+            )}
           </nav>
         </div>
         <div className="flex items-start gap-2">
           <button
             type="button"
-            className="h-[34px] cursor-pointer rounded-full bg-black/25 px-4 text-[14px] font-medium leading-5 text-white transition-colors duration-150 hover:bg-black/55 active:bg-black/70"
+            onClick={() => playClick()}
+            className="h-[34px] cursor-pointer rounded-full px-4 text-[14px] font-medium leading-5 transition-colors duration-150"
             style={{
+              backgroundColor: darkBg
+                ? "rgba(0,0,0,0.25)"
+                : "rgba(12,12,9,0.08)",
+              color: textColour,
               backdropFilter: "blur(10px)",
               WebkitBackdropFilter: "blur(10px)",
             }}
@@ -64,7 +148,12 @@ export function SiteNav() {
           </button>
           <button
             type="button"
-            className="h-[34px] cursor-pointer rounded-full bg-white px-4 text-[14px] font-medium leading-5 text-neutral-950 transition-colors duration-150 hover:bg-neutral-200 active:bg-neutral-300"
+            onClick={() => playClick()}
+            className="h-[34px] cursor-pointer rounded-full px-4 text-[14px] font-medium leading-5 transition-colors duration-150"
+            style={{
+              backgroundColor: darkBg ? "#ffffff" : "#0c0c09",
+              color: darkBg ? "#0c0c09" : "#ffffff",
+            }}
           >
             Create Account
           </button>
