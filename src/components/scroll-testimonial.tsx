@@ -52,10 +52,10 @@ export function ScrollTestimonial() {
       className="w-full"
       style={{ backgroundColor: "hsl(255, 25%, 98%)" }}
     >
-      {/* Outer wrapper is tall (200vh) so we have scroll distance to drive
-          the animation. The inner container sticks to the middle of the
-          viewport while scrolling occurs, matching Figma's reveal feel. */}
-      <div className="relative h-[200vh]">
+      {/* Wrapper is 130 vh (down from 200 vh) — still gives ~30 vh of
+          scroll range to drive the word-by-word colour sweep, but with
+          much less empty space above and below the pinned content. */}
+      <div className="relative h-[130vh]">
         <div className="sticky top-0 flex h-screen w-full items-center justify-center">
           <div className="flex w-[1280px] max-w-full flex-col items-center px-6">
             <div className="flex w-[768px] max-w-full flex-col items-center gap-8">

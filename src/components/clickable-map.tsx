@@ -193,15 +193,18 @@ function generateOceanData(): Click["data"] {
   };
 }
 
-// Popup geometry for smart placement inside the section.
+// Popup geometry for smart placement inside the section. Matches the
+// station popup height now that create-mode popups also show the
+// regional utilisation row.
 const POPUP_W = 326;
-const POPUP_H = 360;
+const POPUP_H = 540;
 const GAP = 15;
 // Placeholder pin matches the charging station pin size.
 const PIN_SIZE = 32;
 // Distance from the anchor (click centre) to the popup edge. Matches
 // bottom-[calc(100%+15px)] used for real station pins.
 const POPUP_OFFSET = GAP + PIN_SIZE / 2;
+const EDGE_GUARD_FIT = 24;
 
 function pickPlacement(x: number, y: number, w: number, h: number): Placement {
   const spaceTop = y;
@@ -209,10 +212,16 @@ function pickPlacement(x: number, y: number, w: number, h: number): Placement {
   const spaceLeft = x;
   const spaceRight = w - x;
 
-  // Only pick top/bottom if the popup's width also fits horizontally
-  // centred on the click point; same for left/right needing vertical fit.
-  const fitsHorizontally = x - POPUP_W / 2 >= 8 && w - (x + POPUP_W / 2) >= 8;
-  const fitsVertically = y - POPUP_H / 2 >= 8 && h - (y + POPUP_H / 2) >= 8;
+  // "Fit" checks use the same 24 px guardrail that the final clamp
+  // enforces — otherwise we might pick top/bottom with 8 px of slack on
+  // the horizontal axis and the clamp has no room to slide without
+  // visibly detaching the popup from the pin.
+  const fitsHorizontally =
+    x - POPUP_W / 2 >= EDGE_GUARD_FIT &&
+    w - (x + POPUP_W / 2) >= EDGE_GUARD_FIT;
+  const fitsVertically =
+    y - POPUP_H / 2 >= EDGE_GUARD_FIT &&
+    h - (y + POPUP_H / 2) >= EDGE_GUARD_FIT;
 
   if (spaceBottom >= POPUP_H + GAP && fitsHorizontally) return "bottom";
   if (spaceTop >= POPUP_H + GAP && fitsHorizontally) return "top";
