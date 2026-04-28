@@ -1,6 +1,10 @@
 import { LogoCarousel } from "@/components/logo-carousel";
 import { HeroChecklist } from "@/components/hero-checklist";
 import { ScrollTestimonial } from "@/components/scroll-testimonial";
+import { AddressTorchBackground } from "@/components/address-torch-background";
+import { UnifiedSystemSection } from "@/components/unified-system-section";
+import { FragmentedSection } from "@/components/fragmented-section";
+import { CostlyConfusingSection } from "@/components/costly-confusing-section";
 import { HeroScene } from "@/components/hero-scene";
 import { SiteNav } from "@/components/site-nav";
 import { CrosshairCursor } from "@/components/crosshair-cursor";
@@ -56,7 +60,7 @@ export default function Home() {
                 >
                   <span className="px-1">Used by 1,200+ businesses worldwide</span>
                 </div>
-                <h1 className="text-[64px] font-semibold leading-[72px] tracking-[-1.28px]">
+                <h1 className="text-[64px] font-semibold leading-[80px] tracking-[-1.28px]">
                   <span className="block">The industry standard</span>
                   <span className="block">
                     for{" "}
@@ -94,19 +98,34 @@ export default function Home() {
         </div>
       </section>
 
-      <section
-        className="flex w-full justify-center pb-10 pt-9"
+      {/* Off-white surface that hosts the logo carousel + the
+          testimonial. The decorative torch-revealed address grid
+          spans BOTH sections so as the user mouses across either
+          one, the addresses fade in behind everything (including the
+          carousel logos). */}
+      <div
+        className="relative w-full"
         style={{ backgroundColor: "hsl(255, 25%, 98%)" }}
       >
-        <div className="flex w-[1280px] max-w-full flex-col items-center gap-6 px-6">
-          <p className="text-[14px] font-medium leading-5 text-neutral-950">
-            Trusted by half of the EV charging industry
-          </p>
-          <LogoCarousel />
-        </div>
-      </section>
+        <AddressTorchBackground />
 
-      <ScrollTestimonial />
+        <section className="relative z-10 flex w-full justify-center pb-10 pt-9">
+          <div className="flex w-[1280px] max-w-full flex-col items-center gap-6 px-6">
+            <p className="text-[14px] font-medium leading-5 text-neutral-950">
+              Trusted by half of the EV charging industry
+            </p>
+            <LogoCarousel />
+          </div>
+        </section>
+
+        <ScrollTestimonial />
+      </div>
+
+      <FragmentedSection />
+
+      <CostlyConfusingSection />
+
+      <UnifiedSystemSection />
 
       {/* Page-wide custom cursor overlay. Only visible while hovering over
           a `data-crosshair-zone` or a charging-station pin. */}

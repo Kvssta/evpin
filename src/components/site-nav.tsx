@@ -74,7 +74,7 @@ export function SiteNav() {
           />
         ))}
         <div
-          className="absolute inset-0"
+          className="absolute inset-0 transition-[background-color] duration-500 ease-out"
           style={{
             backgroundColor: darkBg
               ? "rgba(0,0,0,0.14)"
@@ -90,7 +90,7 @@ export function SiteNav() {
       </div>
 
       <div
-        className="relative mx-auto flex w-[1280px] max-w-full items-center justify-between py-6 transition-colors duration-200"
+        className="relative mx-auto flex w-[1280px] max-w-full items-center justify-between py-6 transition-colors duration-500 ease-out"
         style={{ color: textColour }}
       >
         <div className="flex items-center gap-8">
@@ -100,14 +100,14 @@ export function SiteNav() {
             alt="EVPin"
             width={23}
             height={32}
-            className="h-8 w-auto"
+            className="h-8 w-auto transition-[filter] duration-500 ease-out"
             draggable={false}
             style={{
-              filter: darkBg ? undefined : "invert(1)",
+              filter: darkBg ? "invert(0)" : "invert(1)",
             }}
           />
           <nav
-            className="flex items-center gap-6 text-[14px] font-bold leading-5 tracking-[-0.01em]"
+            className="flex items-center gap-6 text-[14px] font-bold leading-5 tracking-[-0.01em] transition-colors duration-500 ease-out"
             style={{ color: textColour }}
           >
             {["Home", "Tracker", "Pricing", "Spexbook", "Changelog"].map(
@@ -115,7 +115,7 @@ export function SiteNav() {
                 <a
                   key={label}
                   href="#"
-                  className="transition-colors duration-150"
+                  className="transition-colors duration-500 ease-out"
                   style={{ color: textColour }}
                   onMouseEnter={(e) =>
                     (e.currentTarget.style.color = textDim)
@@ -134,7 +134,7 @@ export function SiteNav() {
           <button
             type="button"
             onClick={() => playClick()}
-            className="h-[34px] cursor-pointer rounded-full px-4 text-[14px] font-medium leading-5 transition-colors duration-150"
+            className="h-[34px] cursor-pointer rounded-full px-4 text-[14px] font-medium leading-5 transition-colors duration-500 ease-out"
             style={{
               backgroundColor: darkBg
                 ? "rgba(0,0,0,0.25)"
@@ -149,7 +149,7 @@ export function SiteNav() {
           <button
             type="button"
             onClick={() => playClick()}
-            className="h-[34px] cursor-pointer rounded-full px-4 text-[14px] font-medium leading-5 transition-colors duration-150"
+            className="h-[34px] cursor-pointer rounded-full px-4 text-[14px] font-medium leading-5 transition-colors duration-500 ease-out"
             style={{
               backgroundColor: darkBg ? "#ffffff" : "#0c0c09",
               color: darkBg ? "#0c0c09" : "#ffffff",

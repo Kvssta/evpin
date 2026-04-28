@@ -178,10 +178,14 @@ export function StationPopup({
             <p
               className="text-[12px] leading-5 font-bold tracking-wide"
               style={{
-                // Good locations in white for a positive read; poor
-                // locations inherit the warning/red theme so the colour
-                // reinforces the message.
-                color: /poor/i.test(locationLabel) ? "#ff6b6b" : "#ffffff",
+                // Good locations in white; poor inherit the warning/red
+                // theme; fair sits in a neutral muted tone so it doesn't
+                // read as either a positive or a danger signal.
+                color: /poor/i.test(locationLabel)
+                  ? "#ff6b6b"
+                  : /fair/i.test(locationLabel)
+                    ? "rgba(255,255,255,0.65)"
+                    : "#ffffff",
               }}
             >
               {locationLabel}

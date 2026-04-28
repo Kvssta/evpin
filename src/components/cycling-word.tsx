@@ -18,6 +18,22 @@ export function CyclingWord({ words, intervalMs = 2800 }: Props) {
   const [i, setI] = useState(0);
 
   useEffect(() => {
+    // Allow callers (e.g. our headless screenshot script) to lock the
+    // cycling word to a specific value via `?cycleWord=designing`.
+    if (typeof window !== "undefined") {
+      const param = new URLSearchParams(window.location.search).get(
+        "cycleWord",
+      );
+      if (param) {
+        const idx = words.findIndex(
+          (w) => w.toLowerCase() === param.toLowerCase(),
+        );
+        if (idx >= 0) {
+          setI(idx);
+          return; // skip auto-cycling
+        }
+      }
+    }
     if (words.length <= 1) return;
     const id = setInterval(
       () => setI((prev) => (prev + 1) % words.length),

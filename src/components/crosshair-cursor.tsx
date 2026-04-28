@@ -122,16 +122,20 @@ export function CrosshairCursor() {
           }}
         >
           <motion.svg
-            width="14"
-            height="14"
-            viewBox="0 0 14 16"
+            width="20"
+            height="20"
+            viewBox="0 0 20 20"
             fill="none"
             className="block"
-            animate={{ color: onPin ? "#ffffff" : "#ffffff" }}
+            aria-hidden
           >
             <path
-              d="M9 0.667C9 -0.156 7.923 -0.484 7.459 0.195L0.739 10.278C0.376 10.832 0.773 11.5 1.438 11.5H5V15.333C5 16.156 6.077 16.484 6.541 15.805L13.261 5.722C13.624 5.168 13.227 4.5 12.562 4.5H9V0.667Z"
-              fill="currentColor"
+              d="M19 10C19 14.9706 14.9706 19 10 19C5.02944 19 1 14.9706 1 10C1 5.02944 5.02944 1 10 1C14.9706 1 19 5.02944 19 10Z"
+              stroke="white"
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeDasharray="3 4"
             />
           </motion.svg>
         </div>

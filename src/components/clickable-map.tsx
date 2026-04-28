@@ -129,9 +129,12 @@ function randInt(min: number, max: number) {
 function generateLandData(): Click["data"] {
   const n = NEIGHBORHOODS[randInt(0, NEIGHBORHOODS.length - 1)];
   const score = randInt(30, 50) / 10; // 3.0 - 5.0
+  // Bar fills scale with the score so a 4.5/5 rating never shows a LOW
+  // metric — the metrics read as supporting evidence for the rating, not
+  // a separate random signal.
   const neighbourhoodFilled = score >= 4.5 ? 3 : score >= 3.8 ? 2 : 1;
-  const adoptionFilled = randInt(1, 3);
-  const stationsFilled = randInt(1, 3);
+  const adoptionFilled = score >= 4.3 ? 3 : score >= 3.5 ? 2 : 1;
+  const stationsFilled = score >= 4.5 ? 3 : score >= 3.5 ? 2 : 1;
   const levelLabel = (n: number) =>
     n === 3 ? "HIGH" : n === 2 ? "MED" : "LOW";
   return {
@@ -525,7 +528,9 @@ export function ClickableMap() {
                   click.type === "land"
                     ? parseFloat(click.data.rating) >= 4
                       ? "GOOD LOCATION"
-                      : "POOR LOCATION"
+                      : parseFloat(click.data.rating) >= 3
+                        ? "FAIR LOCATION"
+                        : "POOR LOCATION"
                     : undefined
                 }
                 onClose={() => setClick(null)}
