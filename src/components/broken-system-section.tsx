@@ -1077,7 +1077,7 @@ function BrowserMockup({
 }: {
   activeId: string;
   onSwitch: (id: string) => void;
-  tabState: { width: number; opacity: number }[];
+  tabState: { width: number; opacity: number; t: number }[];
   evpinTabWidth: number;
   evpinTabOpacity: number;
   evpinShare: number;
